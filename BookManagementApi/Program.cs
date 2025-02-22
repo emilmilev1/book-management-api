@@ -12,9 +12,23 @@ builder.Services.AddDbContext<LibraryDbContext>(options =>
 
 builder.Services.AddControllers();
 
+// Config swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "BookManagement API v1");
+        c.RoutePrefix = string.Empty;
+    });
+}
 
 // seed db
 using (var scope = app.Services.CreateScope())
