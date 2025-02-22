@@ -19,8 +19,10 @@ namespace BookManagementApi.Controllers
         [HttpPost("book")]
         public async Task<IActionResult> AddBook([FromBody] Book book)
         {
+            var normalizedTitle = book.Title.ToLower();
+            
             var existingBook = await _libraryDbContext.Books
-                .FirstOrDefaultAsync(b => b.Title.Equals(book.Title, StringComparison.OrdinalIgnoreCase) && !b.IsDeleted);
+                .FirstOrDefaultAsync(b => b.Title.ToLower().Equals(normalizedTitle) && !b.IsDeleted);
 
             if (existingBook != null)
             {
@@ -33,7 +35,7 @@ namespace BookManagementApi.Controllers
             return CreatedAtAction(nameof(GetBookDetails), new { id = book.Id }, book);
         }
         
-        [HttpPost("books")]
+        [HttpPost]
         public async Task<IActionResult> AddBooks([FromBody] List<Book> books)
         {
             var existingBooks = await _libraryDbContext.Books
@@ -55,7 +57,7 @@ namespace BookManagementApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateBook(Guid id, [FromBody] Book updatedBook)
         {
-            var book = await _libraryDbContext.Books.FirstOrDefaultAsync(b => b.Id == id);
+            var book = await _libraryDbContext.Books.FirstOrDefaultAsync(b => b.Id == id && !b.IsDeleted);
             if (book == null)
             {
                 return NotFound();
@@ -66,31 +68,30 @@ namespace BookManagementApi.Controllers
             book.AuthorName = updatedBook.AuthorName;
             await _libraryDbContext.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(book);
         }
         
         [HttpDelete("{id}")]
         public async Task<IActionResult> SoftDeleteBook(Guid id)
         {
-            var book = await _libraryDbContext.Books.FirstOrDefaultAsync(b => b.Id == id);
+            var book = await _libraryDbContext.Books.FirstOrDefaultAsync(b => b.Id == id && !b.IsDeleted);
             if (book == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Book not found or already deleted." });
             }
 
             book.IsDeleted = true;
             await _libraryDbContext.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Book deleted successfully.", bookId = id });
         }
 
-        [HttpDelete("books")]
+        [HttpDelete]
         public async Task<IActionResult> SoftDeleteBooks([FromBody] List<Guid> bookIds)
         {
             var books = await _libraryDbContext.Books
                 .Where(b => bookIds.Contains(b.Id) && !b.IsDeleted)
                 .ToListAsync();
-
             if (!books.Any())
             {
                 return NotFound();
@@ -102,7 +103,9 @@ namespace BookManagementApi.Controllers
             }
 
             await _libraryDbContext.SaveChangesAsync();
-            return NoContent();
+            
+            var deletedIds = books.Select(b => b.Id).ToList();
+            return Ok(new { message = "Books deleted successfully.", deletedBookIds = deletedIds });
         }
         
         [HttpGet("titles")]
