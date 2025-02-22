@@ -16,10 +16,17 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
-app.UseHttpsRedirection();
+// seed db
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var libraryDbContext = services.GetRequiredService<LibraryDbContext>();
+    SeedData.CreateLibrary(libraryDbContext);
+}
 
+app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.Run();

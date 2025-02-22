@@ -1,12 +1,23 @@
-﻿namespace BookManagementApi.Models
+﻿using System.ComponentModel.DataAnnotations;
+using BookManagementApi.Common;
+
+namespace BookManagementApi.Models
 {
     public class Book
     {
-        public int Id { get; set; }
-        public string Title { get; set; }
+        public Guid Id { get; set; }
+        
+        [Required]
+        [MaxLength(Constants.BookTitleMaxLength)]
+        public string Title { get; set; } = string.Empty;
+        
+        [Required]
         public int PublicationYear { get; set; }
-        public string AuthorName { get; set; }
-        public int ViewsCout { get; set; }
+        
+        [Required]
+        [MaxLength(Constants.BookTitleMaxLength)]
+        public string AuthorName { get; set; } = string.Empty;
+        public int ViewsCount { get; set; }
         public bool IsDeleted { get; set; }
     }
 }

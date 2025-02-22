@@ -12,5 +12,13 @@ namespace BookManagementApi.DataAccess
         }
         
         public DbSet<Book> Books { get; set; }
+        
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Book>()
+                .HasKey(b => b.Id);
+
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }
