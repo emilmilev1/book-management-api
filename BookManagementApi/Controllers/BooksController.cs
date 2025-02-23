@@ -18,6 +18,38 @@ namespace BookManagementApi.Controllers
             _libraryDbContext = libraryDbContext;
         }
         
+        [HttpGet("titles")]
+        public async Task<ActionResult> GetBookTitles(int page = 1, int pageSize = 10)
+        {
+            var books = await _libraryDbContext.Books
+                .Where(b => !b.IsDeleted)
+                .OrderByDescending(b => b.ViewsCount)
+                .Select(b => b.Title)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return Ok(books);
+        }
+
+        [HttpGet("details/{id}")]
+        public async Task<IActionResult> GetBookDetails(Guid id)
+        {
+            var book = await _libraryDbContext.Books.FirstOrDefaultAsync(b => b.Id == id && !b.IsDeleted);
+            if (book == null)
+            {
+                return NotFound();
+            }
+
+            book.ViewsCount++;
+            await _libraryDbContext.SaveChangesAsync();
+
+            var yearsSincePublished = DateTime.Now.Year - book.PublicationYear;
+            var popularityScore = (book.ViewsCount * 0.5) + (yearsSincePublished * 2);
+
+            return Ok(new { book, PopularityScore = popularityScore });
+        }
+        
         [HttpPost("book")]
         public async Task<IActionResult> AddBook([FromBody] Book book)
         {
@@ -108,38 +140,6 @@ namespace BookManagementApi.Controllers
             
             var deletedIds = books.Select(b => b.Id).ToList();
             return Ok(new { message = "Books deleted successfully.", deletedBookIds = deletedIds });
-        }
-        
-        [HttpGet("titles")]
-        public async Task<ActionResult> GetBookTitles(int page = 1, int pageSize = 10)
-        {
-            var books = await _libraryDbContext.Books
-                .Where(b => !b.IsDeleted)
-                .OrderByDescending(b => b.ViewsCount)
-                .Select(b => b.Title)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            return Ok(books);
-        }
-
-        [HttpGet("details/{id}")]
-        public async Task<IActionResult> GetBookDetails(Guid id)
-        {
-            var book = await _libraryDbContext.Books.FirstOrDefaultAsync(b => b.Id == id && !b.IsDeleted);
-            if (book == null)
-            {
-                return NotFound();
-            }
-
-            book.ViewsCount++;
-            await _libraryDbContext.SaveChangesAsync();
-
-            var yearsSincePublished = DateTime.Now.Year - book.PublicationYear;
-            var popularityScore = (book.ViewsCount * 0.5) + (yearsSincePublished * 2);
-
-            return Ok(new { book, PopularityScore = popularityScore });
         }
     }
 }
