@@ -6,7 +6,7 @@ A simple API for managing books in a library system.
 
 ## Technologies
 
--   **.NET 6**
+-   **.NET 8**
 -   **SQL Server**
 -   **JWT Authentication**
 -   **Swagger** for API documentation and testing
